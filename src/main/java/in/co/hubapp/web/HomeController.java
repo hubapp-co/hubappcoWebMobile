@@ -1,6 +1,7 @@
 package in.co.hubapp.web;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
@@ -28,9 +29,12 @@ public class HomeController {
         return "user/index";
     }
 
-	/*
-	 * @GetMapping("/login") public String login() { return "login"; }
-	 */
+	
+	@GetMapping("/login") 
+    public String login(Model model)  { 
+		return "login"; 
+	}
+	 
     @GetMapping("/access-denied")
     public String accessDenied() {
         return "/error/access-denied";

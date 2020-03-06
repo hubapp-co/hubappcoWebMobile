@@ -1,5 +1,6 @@
 package in.co.hubapp.config;
 
+import in.co.hubapp.service.UserService;
 import in.co.hubapp.web.LoggingAccessDeniedHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import javax.sql.DataSource;
@@ -32,6 +34,9 @@ import org.springframework.security.web.authentication.rememberme.PersistentToke
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
  
+	 @Autowired
+	    private UserService userService;
+	 
     @Autowired
     private DataSource dataSource;
     @Autowired
@@ -67,8 +72,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                             "/rs-plugin/**",
                             "/video/**",
                             "/fonts/**",
-                            "/webjars/**").permitAll()
-                    .antMatchers("/user/**").hasRole("USER")
+                            "/webjars/**",
+                            "/user/**",
+                            "/registration**").permitAll()
+				/* .antMatchers("/user/**").hasRole("USER") */
                     .anyRequest().authenticated()
                 .and()
                 .formLogin()
@@ -81,24 +88,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
                     .logoutSuccessUrl("/login?logout")
                     .permitAll()
-                .and()
-                .exceptionHandling()
-                    .accessDeniedHandler(accessDeniedHandler);
+		/*
+		 * .and() .exceptionHandling() .accessDeniedHandler(accessDeniedHandler)
+		 */;
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("user").password("password").roles("USER")
-            .and()
-                .withUser("manager").password("password").roles("MANAGER");
-    }
+	/*
+	 * @Override protected void configure(AuthenticationManagerBuilder auth) throws
+	 * Exception { auth.inMemoryAuthentication()
+	 * .withUser("user").password("password").roles("USER") .and()
+	 * .withUser("manager").password("password").roles("MANAGER"); }
+	 */
     
     @Bean
-    public PersistentTokenRepository persistentTokenRepository() {
-        JdbcTokenRepositoryImpl db = new JdbcTokenRepositoryImpl();
-        db.setDataSource(dataSource);
-        return db;
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
+        auth.setUserDetailsService(userService);
+        auth.setPasswordEncoder(passwordEncoder());
+        return auth;
+    }
+    
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(authenticationProvider());
     }
  
 
